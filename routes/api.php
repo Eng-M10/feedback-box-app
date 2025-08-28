@@ -11,3 +11,13 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/analisar', [SentimentoController::class, 'analisar']);
 Route::get('/estatistica',[SentimentoController::class, 'estatistica']);
+
+Route::post('/test' , function(Request $request) {
+        $message = $request->json("message");
+
+        $obj = new SentimentoController();
+
+        $result = $obj->analyzeSentiment($message);
+
+        return response()->json(['object'=>$result]);
+});
