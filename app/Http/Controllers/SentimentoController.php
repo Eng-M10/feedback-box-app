@@ -3,32 +3,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Sentimento;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Mockery\Exception;
 
 class SentimentoController extends Controller
 {
-    private function analyzeSentiment($msg)
+    public function analyzeSentiment($msg)
     {
-
-
-        // Configurações do Guzzle
         $client = new Client([
-            'base_uri' => 'https://api-inference.huggingface.co',
+            'base_uri' => env("HUGGING_FACE_BASE_URI"),
         ]);
 
         try {
-            $response = $client->post('/models/distilbert-base-uncased-finetuned-sst-2-english', [
+            $response = $client->post(env("HUGGING_FACE_DISTILBERT_MODEL_URI"), [
                 'headers' => [
-                    'Authorization' => 'Bearer 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',
+                    'Authorization' => 'Bearer '.env("BREAR_HUGGING_FACE_TOKEN"),
+                    'Content-Type'  => 'application/json',
                 ],
                 'json' => [
                     'inputs' => $msg,
                 ],
             ]);
 
-            // Retorna a resposta decodificada
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
             return [
@@ -36,15 +34,18 @@ class SentimentoController extends Controller
                 'message' => $e->getMessage(),
             ];
         } catch (GuzzleException $e) {
-
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
         }
     }
 
-    public function analisar(Request $request)
+
+    public function analisar(Request $request): JsonResponse
     {
         $request->validate([
             'age' => 'integer|required|max:100|min:5',
-
             'stream_date' => 'string|required|max:255',
             'feedback' => 'required|string|max:255',
         ]);
@@ -73,7 +74,8 @@ class SentimentoController extends Controller
         ]);
     }
 
-    public function estatistica(){
+    public function estatistica(): JsonResponse
+    {
 
         try{
             $sentimento = Sentimento::all();
